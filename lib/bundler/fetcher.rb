@@ -15,6 +15,8 @@ module Bundler
       attr_accessor :disable_endpoint
 
       @@spec_fetch_map ||= {}
+      @@connection ||= Net::HTTP::Persistent.new nil, :ENV
+      @@connection.read_timeout = API_TIMEOUT
 
       def fetch(spec)
         spec, uri = @@spec_fetch_map[spec.full_name]
@@ -64,8 +66,6 @@ module Bundler
     def initialize(remote_uri)
       @remote_uri = remote_uri
       @has_api    = true # will be set to false if the rubygems index is ever fetched
-      @@connection ||= Net::HTTP::Persistent.new nil, :ENV
-      @@connection.read_timeout = API_TIMEOUT
     end
 
     # fetch a gem specification
