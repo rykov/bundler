@@ -92,7 +92,7 @@ module Bundler
       when "jruby"
         JRUBY_VERSION
       else
-        raise BundlerError, "That RUBY_ENGINE is not recognized"
+        raise BundlerError, "RUBY_ENGINE value #{RUBY_ENGINE} is not recognized"
         nil
       end
     end
