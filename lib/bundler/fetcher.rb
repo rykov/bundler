@@ -41,6 +41,23 @@ module Bundler
 
         gem_path
       end
+
+      def user_agent
+        @user_agent ||= begin
+          ruby = Bundler.ruby_version
+
+          agent = "bundler/#{Bundler::VERSION}"
+          agent += " rubygems/#{Gem::VERSION}"
+          agent += " ruby/#{ruby.version}"
+          if ruby.engine != "ruby"
+            # engine_version raises on unknown engines
+            engine_version = ruby.engine_version rescue "???"
+            agent += " #{ruby.engine}/#{engine_version}"
+          end
+          agent
+        end
+      end
+
     end
 
     def initialize(remote_uri)
@@ -48,6 +65,7 @@ module Bundler
       @has_api    = true # will be set to false if the rubygems index is ever fetched
       @@connection ||= Net::HTTP::Persistent.new nil, :ENV
       @@connection.read_timeout = API_TIMEOUT
+      @@connection.headers.merge!('User-Agent' => self.class.user_agent)
     end
 
     # fetch a gem specification
