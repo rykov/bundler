@@ -66,7 +66,6 @@ module Bundler
       @has_api    = true # will be set to false if the rubygems index is ever fetched
       @@connection ||= Net::HTTP::Persistent.new nil, :ENV
       @@connection.read_timeout = API_TIMEOUT
-      @@connection.headers.merge!('User-Agent' => self.class.user_agent)
     end
 
     # fetch a gem specification
@@ -157,7 +156,9 @@ module Bundler
 
       begin
         Bundler.ui.debug "Fetching from: #{uri}"
-        response = @@connection.request(uri)
+        request = Net::HTTP::Get.new uri.request_uri
+        request["User-Agent"] = self.class.user_agent
+        response = @@connection.request(uri, request)
       rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::ETIMEDOUT,
              EOFError, SocketError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError,
              Errno::EAGAIN, Net::HTTP::Persistent::Error, Net::ProtocolError
