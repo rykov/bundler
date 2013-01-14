@@ -15,8 +15,6 @@ module Bundler
       attr_accessor :disable_endpoint
 
       @@spec_fetch_map ||= {}
-      @@connection ||= Net::HTTP::Persistent.new nil, :ENV
-      @@connection.read_timeout = API_TIMEOUT
 
       def fetch(spec)
         spec, uri = @@spec_fetch_map[spec.full_name]
@@ -42,6 +40,15 @@ module Bundler
         end
 
         gem_path
+      end
+
+      def connection
+        @connection ||= begin
+          conn = Net::HTTP::Persistent.new nil, :ENV
+          conn.read_timeout = API_TIMEOUT
+          conn.override_headers["User-Agent"] = user_agent
+          conn
+        end
       end
 
       def user_agent
@@ -156,9 +163,7 @@ module Bundler
 
       begin
         Bundler.ui.debug "Fetching from: #{uri}"
-        request = Net::HTTP::Get.new uri.request_uri
-        request["User-Agent"] = self.class.user_agent
-        response = @@connection.request(uri, request)
+        response = self.class.connection.request(uri)
       rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::ETIMEDOUT,
              EOFError, SocketError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError,
              Errno::EAGAIN, Net::HTTP::Persistent::Error, Net::ProtocolError
